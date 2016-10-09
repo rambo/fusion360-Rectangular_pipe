@@ -1,0 +1,10 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"script",
+	"author":	"Eero 'rambo' af Heurlin",
+	"description":	{
+		"":	"Create rectangular pipes"
+	},
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}

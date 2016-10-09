@@ -3,26 +3,25 @@
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
 
-    
-def run(context):
+
+def create_pipe(selection, pipe_x_expr, pipe_y_expr, pipe_t_expr):
     ui = None
     rollback_objects = []
     try:
         app = adsk.core.Application.get()
         ui  = app.userInterface
 
-        pipe_x = app.activeProduct.unitsManager.evaluateExpression('20mm', 'mm')
-        pipe_y = app.activeProduct.unitsManager.evaluateExpression('30mm', 'mm')
-        pipeThickness = '2.0mm'
-        
         product = app.activeProduct
         design = adsk.fusion.Design.cast(product)
         if not design:
             ui.messageBox('It is not supported in current workspace, please change to MODEL workspace and try again.')
             return
-        
-        sel = ui.selectEntity('Select a path to create a pipe', 'Edges,SketchCurves')
-        selObj = sel.entity
+
+        pipe_x = app.activeProduct.unitsManager.evaluateExpression(pipe_x_expr, 'mm')
+        pipe_y = app.activeProduct.unitsManager.evaluateExpression(pipe_y_expr, 'mm')
+        pipe_t = app.activeProduct.unitsManager.evaluateExpression(pipe_t_expr, 'mm')
+
+        selObj = selection.entity
         
         comp = design.rootComponent
         
@@ -72,14 +71,38 @@ def run(context):
         
         shellFeats = feats.shellFeatures
         shellInput = shellFeats.createInput(objCol, False)
-        shellInput.insideThickness = adsk.core.ValueInput.createByString(pipeThickness)
+        shellInput.insideThickness = adsk.core.ValueInput.createByReal(pipe_t)
         shellFeat = shellFeats.add(shellInput)
         rollback_objects.append(shellFeat)
         
-        app.activeViewport.refresh()
 
     except:
         for obj in rollback_objects[::-1]:
             obj.deleteMe()
+        if ui:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+    
+    finally:
+        app.activeViewport.refresh()
+
+
+
+    
+def run(context):
+    ui = None
+    try:
+        app = adsk.core.Application.get()
+        ui  = app.userInterface
+
+        product = app.activeProduct
+        design = adsk.fusion.Design.cast(product)
+        if not design:
+            ui.messageBox('It is not supported in current workspace, please change to MODEL workspace and try again.')
+            return
+
+        sel = ui.selectEntity('Select a path to create a pipe', 'Edges,SketchCurves')
+        create_pipe(sel, '20mm', '30mm', '2mm')
+
+    except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
